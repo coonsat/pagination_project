@@ -17,6 +17,11 @@ let filteredList = []; // Will be used for filtering the data array
 // Reusable methods
 
    //Removes all child nodes from a parent node
+const fetchStudentList = () => {
+   return filteredList.length > 0 ? filteredList : data;
+}
+
+
 const removeAllChildNodes = parent => {
    while (parent.firstChild) {
       parent.removeChild(parent.firstChild);
@@ -75,27 +80,21 @@ const createProfileCard = (profile) => {
 }
 
 
-function showPage(pageNumber) {
+function showPage(pageNumber, studentList) {
    let memberList = document.querySelector('.student-list');
    removeAllChildNodes(memberList);
    currentPage = pageNumber;
    let start = (pageNumber * itemsPerPage) - itemsPerPage;
    let end = pageNumber * itemsPerPage;
 
-   if (filteredList.length > 0) {
+   if (studentList.length > 0) {
       for ( ; start < end ; start++) {
-         const member = filteredList[start];
-         //the start index, depending on page selected, may overshoot
-         //the length of the data array. Therefore, this one line
-         //if clause will only accept members that are populated
+         const member = studentList[start];
          if (member) memberList.append( createProfileCard(member) );
       }
    } else {
-      for ( ; start < end ; start++) {
-         const member = data[start];
-         //Dito as above
-         if (member) memberList.append( createProfileCard(member) );
-      }
+      let noResults = createDocumentElement('span', 'textContent', 'No results');
+      memberList.append(noResults);
    }
 
 }
@@ -107,14 +106,8 @@ This function will create and insert/append the elements needed for the paginati
 
 //function that is responsible for changing the page (where applicable)
 const changePage = e => {
-   showPage( parseInt(e.target.innerHTML) );
-   let pages;
-   if (filteredList.length > 0) {
-      pages = numberOfPages( filteredList, itemsPerPage );
-   } else {
-      pages = numberOfPages( data, itemsPerPage );
-   }
-   createPaginationBar( pages );
+   showPage( parseInt(e.target.innerHTML), fetchStudentList() );
+   createPaginationBar( numberOfPages(fetchStudentList(), itemsPerPage) );
 }
 
 //Active class allocated only if current page match the index
@@ -153,7 +146,7 @@ const filterEntries = value => {
          filteredList.push(data[i]);
       }
    }
-   showPage(1);
+   showPage(1, filteredList);
    createPaginationBar( numberOfPages( filteredList, itemsPerPage) );
 }
 
@@ -179,8 +172,5 @@ const createSearchBar = () => {
 
 // Call functions
 createSearchBar();
-createPaginationBar( Math.ceil(data.length / itemsPerPage) );
-showPage(currentPage);
-
-
-
+createPaginationBar( numberOfPages( data, itemsPerPage) );
+showPage(currentPage, data);
