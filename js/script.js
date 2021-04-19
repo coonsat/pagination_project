@@ -10,130 +10,176 @@ For assistance:
    Check out the "Project Resources" section of the Instructions tab: https://teamtreehouse.com/projects/data-pagination-and-filtering#instructions
    Reach out in your Slack community: https://treehouse-fsjs-102.slack.com/app_redirect?channel=unit-2
 */
-let currentPage = 1;
-const itemsPerPage = 9;
+let currentPage = 1; // set default start page to 1
+const itemsPerPage = 9; // as per requirement, items per page is 9
+let filteredList = []; // Will be used for filtering the data array
 
+// Reusable methods
 
+   //Removes all child nodes from a parent node
+const removeAllChildNodes = parent => {
+   while (parent.firstChild) {
+      parent.removeChild(parent.firstChild);
+   }
+}
+
+   //Dynamically creates DOM elements according to parameters
+const createDocumentElement = (elementName, property, content) => {
+   const element = document.createElement(elementName);
+   element[property] = content;
+   return element;
+}
+
+   //Adds extra attributes to image DOM elements
+const editImageAttributes = (imgObject, source, altText) => {
+   imgObject.src = source;
+   imgObject.alt = altText;
+   return imgObject;
+}
+
+   //Calculates the number of pages to be shown according to 
+   //full or filtered data list
+const numberOfPages = (array, perPage) => {
+   return Math.ceil(array.length / perPage);
+}
 
 /*
 Create the `showPage` function
 This function will create and insert/append the elements needed to display a "page" of nine students
 */
 
-const createHTMLElement = (element, nameOfClass, content) => {
-   return document.createElement(element)
-            .class(nameOfClass)
-            .innerHTML(content);
-}
-
+//Creates the profile card for each student in the array
 const createProfileCard = (profile) => {
-   //Create li container
-   let container = document.createElement('li');
-   container.className = "student-item cf";
 
+   //Create container for profile
+   const container = createDocumentElement('li', 'className', 'student-item cf');
+   
    //Create profile details
-   let details = document.createElement('div');
-   details.className = "student-details";
-   let avatar = document.createElement('img');
-   avatar.className = "avatar";
-   avatar.src = profile.picture.thumbnail;
-   avatar.alt = "Profile Picture";
-   let name = document.createElement('h3');
-   name.innerHTML = profile.name.first +" " + profile.name.last;
-   let email = document.createElement('span');
-   email.className = "email";
+   const details =   createDocumentElement('div', 'className', 'student-details');
+   const avatar =    createDocumentElement('img', 'className', 'avatar');
+   editImageAttributes(avatar, profile.picture.thumbnail, 'Profile Picture')
+   const name =      createDocumentElement('h3', 'textContent',  profile.name.first +" " + profile.name.last);
+   const email =     createDocumentElement('span', 'className', 'email');
    details.append(avatar, name, email);
 
-   //Joined details
-   let joinedDetails = document.createElement('div');
-   let joined = "Joined " + profile.registered.date;
-   joinedDetails.append(joined);
+   //Create joined details
+   const joinCon =   createDocumentElement('div', 'className', 'joined-details');
+   const joined =    createDocumentElement('span', 'className', 'date');
+   joined.textContent = `Joined ${profile.registered.date}`;
+   joinCon.append(joined);
 
-   container.append(details, joinedDetails);
+   //Consolidate all html tags
+   container.append(details, joinCon);
 
    return container;
 }
 
+
 function showPage(pageNumber) {
    let memberList = document.querySelector('.student-list');
-   // memberList.innerHTML = "";
+   removeAllChildNodes(memberList);
    currentPage = pageNumber;
    let start = (pageNumber * itemsPerPage) - itemsPerPage;
    let end = pageNumber * itemsPerPage;
 
-   for ( ; start < end ; start++) {
-      const member = data[start];
-      memberList.append( createProfileCard(member) );
-      // studentList.append(
-      //    <li class="student-item cf">
-      //       <div class="student-details">
-      //          <img class="avatar" src={student.picture.thumbnail} alt="Profile Picture"/>
-      //          <h3>{student.name.first} {student.name.last}</h3>
-      //          <span class="email">{student.email}</span>
-      //       </div>
-      //       <div class="joined-details">
-      //          <span class="date">Joined {student.registered.date}</span>
-      //       </div>
-      //    </li>
-      // );
+   if (filteredList.length > 0) {
+      for ( ; start < end ; start++) {
+         const member = filteredList[start];
+         //the start index, depending on page selected, may overshoot
+         //the length of the data array. Therefore, this one line
+         //if clause will only accept members that are populated
+         if (member) memberList.append( createProfileCard(member) );
+      }
+   } else {
+      for ( ; start < end ; start++) {
+         const member = data[start];
+         //Dito as above
+         if (member) memberList.append( createProfileCard(member) );
+      }
    }
+
 }
-
-
 
 /*
 Create the `addPagination` function
 This function will create and insert/append the elements needed for the pagination buttons
 */
 
+//function that is responsible for changing the page (where applicable)
+const changePage = e => {
+   showPage( parseInt(e.target.innerHTML) );
+   let pages;
+   if (filteredList.length > 0) {
+      pages = numberOfPages( filteredList, itemsPerPage );
+   } else {
+      pages = numberOfPages( data, itemsPerPage );
+   }
+   createPaginationBar( pages );
+}
+
+//Active class allocated only if current page match the index
+//in the loop of the calling function. The current page is set
+//in showpage()
 const createButton = (index) => {
-   let button = document.createElement('button');
-   button.type = "button";
+   const button = createDocumentElement('button', 'type', 'button');
    button.className = index === currentPage ? "active" : "";
    button.innerHTML = index;
    button.addEventListener('click', changePage);
    return button;
 }
 
-function createPaginationBar() {
-   let pagination = document.querySelector('.link-list');
-   let pages = Math.ceil(data.length / itemsPerPage);
+//DOM selector used to retrieve pagination and then clear out
+//any children nodes. Once cleared, new nodes are added. 
+function createPaginationBar(pages) {
+   const pagination = document.querySelector('.link-list');
+   removeAllChildNodes(pagination);
 
-   for (let i = 0 ; i < pages ; i++) {
+   for (let index = 0 ; index < pages ; index++) {
       let li = document.createElement('li');
-      li.append( createButton(i + 1) );
+      li.append( createButton(index + 1) );
       pagination.append(li);
    }
 }
 
-// function showPage(pageNumber){
-//    console.log("Request page " + pageNumber);
-// }
-
-const changePage = e => {
-   console.log(e.target.innerHTML);
+//The name of the student and the input entered is first 
+//concatenated and then evaluated using the .includes(method) 
+//Every change in the input box clears out the filteredList
+//declared in the script above. 
+const filterEntries = value => {
+   filteredList = [];
+   for (let i = 0 ; i < data.length ; i++) {
+      studentName = data[i].name.first + " " + data[i].name.last;
+      if (studentName.toLowerCase().includes(value.toLowerCase())) {
+         filteredList.push(data[i]);
+      }
+   }
+   showPage(1);
+   createPaginationBar( numberOfPages( filteredList, itemsPerPage) );
 }
 
-function filterEntries(input) {
-   console.log("I have a value " + input)
-}
+//Render search bar
+const createSearchBar = () => {
+   
+   let header = document.querySelector('header');
 
-let header = document.querySelector('header');
+   const label =     createDocumentElement('label', 'for', 'search');
+   label.className = "student-search";
+   const phText =    createDocumentElement('span', 'innerHTML', 'Search by name');
+   const input =     createDocumentElement('input', 'placeholder', 'Search by name');
+   input.addEventListener('input', () => filterEntries(input.value));
 
-// header.append(
-//    <label for="search" class="student-search">
-//       <span>Search by name</span>
-//       <input id="search" placeholder="Search bz name..." onChange={() => filterEntries(input.value)}/>
-//       <button>
-//          <img src="img/icn-search.svg" alt="Search icon" />
-//       </button>
-//    </label>
-// );
+   const button =    createDocumentElement('button', '', '');
+   const search =    createDocumentElement('img', '', '');
+   editImageAttributes(search, 'img/icn-search.svg', 'Search icon')
+   button.append(search);
 
+   label.append(phText, input, button);
+   header.append(label);
+};
 
 // Call functions
-
-createPaginationBar()
+createSearchBar();
+createPaginationBar( Math.ceil(data.length / itemsPerPage) );
 showPage(currentPage);
 
 
