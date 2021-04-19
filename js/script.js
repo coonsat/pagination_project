@@ -16,12 +16,14 @@ let filteredList = []; // Will be used for filtering the data array
 
 // Reusable methods
 
-   //Removes all child nodes from a parent node
+   //Used to determine if a filter exists in the input tag
+   //If the list has been filtered then the filtered list is returned
+   //If not then send back the original data. 
 const fetchStudentList = () => {
    return filteredList.length > 0 ? filteredList : data;
 }
 
-
+   //Removes all child nodes from a parent node
 const removeAllChildNodes = parent => {
    while (parent.firstChild) {
       parent.removeChild(parent.firstChild);
