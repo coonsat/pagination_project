@@ -1,5 +1,4 @@
 # Student List Pagination Project
-Simple pagination program
 
 ![](img/Home_Screenshot.png)
 
